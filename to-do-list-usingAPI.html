@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List Using JSON API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .completed {
+            background-color: #d4edda;
+        }
+        .btn {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .btn-delete {
+            background-color: red;
+            color: white;
+        }
+        .btn-complete {
+            background-color: green;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h2>✅ To-Do List Using API</h2>
+<button onclick="fetchTodos()">📥 Fetch To-Do List</button>
+
+<!-- Input Field to Add New To-Do -->
+<h3>Add New To-Do</h3>
+<input type="text" id="todo-title" placeholder="Enter your to-do...">
+<button onclick="addTodo()">➕ Add To-Do</button>
+
+<h3>To-Do List</h3>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="todo-list">
+        <!-- Data will be populated here -->
+    </tbody>
+</table>
+
+<script>
+// ✅ Fetch To-Do List from API
+function fetchTodos() {
+    fetch('https://jsonplaceholder.typicode.com/todos')
+    .then(response => response.json())
+    .then(todos => {
+        const todoList = document.getElementById('todo-list');
+        todoList.innerHTML = '';
+
+        todos.slice(0, 10).forEach(todo => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${todo.id}</td>
+                <td>${todo.title}</td>
+                <td>${todo.completed ? '✅ Completed' : '❌ Pending'}</td>
+                <td>
+                    <button class="btn btn-complete" onclick="markComplete(this, ${todo.id})">✔ Mark Complete</button>
+                    <button class="btn btn-delete" onclick="deleteTodo(${todo.id}, this)">🗑 Delete</button>
+                </td>
+            `;
+            if (todo.completed) {
+                row.classList.add('completed');
+            }
+            todoList.appendChild(row);
+        });
+    })
+    .catch(error => console.error('Error fetching todos:', error));
+}
+
+// ✅ Mark To-Do as Complete
+function markComplete(button, id) {
+    // Make the row green and change text
+    const row = button.parentElement.parentElement;
+    row.classList.add('completed');
+    row.cells[2].innerText = '✅ Completed';
+
+    // Update API (optional - but simulated)
+    fetch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+            completed: true
+        }),
+        headers: {
+            'Content-type': 'application/json; charset=UTF-8',
+        },
+    })
+    .then(response => response.json())
+    .then(data => console.log('Marked as completed:', data))
+    .catch(error => console.error('Error updating todo:', error));
+}
+
+// ✅ Add New To-Do (POST request)
+function addTodo() {
+    const title = document.getElementById('todo-title').value;
+    if (title === '') {
+        alert('Please enter a to-do title.');
+        return;
+    }
+
+    // Add it to the API (simulated)
+    fetch('https://jsonplaceholder.typicode.com/todos', {
+        method: 'POST',
+        body: JSON.stringify({
+            title: title,
+            completed: false
+        }),
+        headers: {
+            'Content-type': 'application/json; charset=UTF-8',
+        },
+    })
+    .then(response => response.json())
+    .then(newTodo => {
+        // Add the new to-do to the table
+        const todoList = document.getElementById('todo-list');
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${newTodo.id}</td>
+            <td>${newTodo.title}</td>
+            <td>❌ Pending</td>
+            <td>
+                <button class="btn btn-complete" onclick="markComplete(this, ${newTodo.id})">✔ Mark Complete</button>
+                <button class="btn btn-delete" onclick="deleteTodo(${newTodo.id}, this)">🗑 Delete</button>
+            </td>
+        `;
+        todoList.appendChild(row);
+        document.getElementById('todo-title').value = '';
+    })
+    .catch(error => console.error('Error adding todo:', error));
+}
+
+// ✅ Delete To-Do (DELETE request)
+function deleteTodo(id, button) {
+    // Remove the row from table
+    const row = button.parentElement.parentElement;
+    row.remove();
+
+    // Send DELETE request to API (optional)
+    fetch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
+        method: 'DELETE',
+    })
+    .then(() => console.log('To-Do deleted:', id))
+    .catch(error => console.error('Error deleting todo:', error));
+}
+</script>
+
+</body>
+</html>
